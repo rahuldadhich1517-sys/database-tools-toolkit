@@ -33,7 +33,7 @@ jobs:
         run: npm run build
 
       - name: Run test suite
-        run: npm run test:run
+        run: npm test
 
       - name: Set GitHub Packages scope
         run: npm pkg set name=@rahuldadhich1517-sys/database-tools-toolkit
