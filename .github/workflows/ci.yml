@@ -1,0 +1,164 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify-build:
+    name: Build & Verify (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit Tests & Coverage
+        run: npm run test:coverage
+
+      - name: Build Package
+        run: npm run build
+
+      - name: In-Repo Smoke Tests
+        run: npm run test:smoke
+
+      - name: Verify Clean Consumer Tarball
+        run: npm run test:consumer
+
+      - name: NPM Pack Dry Run
+        run: npm pack --dry-run
+
+      - name: Create Tarball Artifact
+        if: matrix.node-version == '22.x'
+        run: npm pack
+
+      - name: Upload Tarball Artifact
+        if: matrix.node-version == '22.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-tarball
+          path: "*.tgz"
+          retention-days: 7
+
+  runtime-compatibility:
+    name: Runtime Compatibility Matrix (Node ${{ matrix.node-version }} on ${{ matrix.os }})
+    needs: verify-build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Download Tarball Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package-tarball
+          path: ./artifact
+
+      - name: Run Consumer Verification on Clean Project
+        shell: bash
+        run: |
+          mkdir consumer-test
+          cd consumer-test
+          npm init -y
+          TARBALL=$(ls ../artifact/*.tgz)
+          echo "Installing tarball $TARBALL..."
+          npm install "$TARBALL"
+
+          cat << 'EOF' > test-esm.mjs
+          import assert from "node:assert";
+          import {
+            parseConnectionString,
+            decodeObjectId,
+            decodeSnowflakeId,
+            decodeUUID,
+            formatSQL,
+            explainSQL,
+            buildSelectQuery,
+            generateInsertSQL,
+            generateCreateTable,
+            convertMySQLToPostgres,
+            parseExplainPlan
+          } from "@rahul_dadhich15/database-tools-toolkit";
+          import { parseConnectionString as parseCS } from "@rahul_dadhich15/database-tools-toolkit/connection-string";
+          import { decodeObjectId as decodeOID } from "@rahul_dadhich15/database-tools-toolkit/objectid";
+          import { decodeUUID as decUUID } from "@rahul_dadhich15/database-tools-toolkit/uuid";
+
+          assert.strictEqual(parseConnectionString("postgres://u:p@localhost:5432/db").protocol, "postgres:");
+          assert.strictEqual(parseCS("sqlite::memory:").database, ":memory:");
+          assert.strictEqual(decodeObjectId("507f1f77bcf86cd799439011").timestamp.seconds, 1350508407);
+          assert.strictEqual(decodeOID("507f1f77bcf86cd799439011").id, "507f1f77bcf86cd799439011");
+          assert.strictEqual(decodeSnowflakeId(1541815603606036480n).id, "1541815603606036480");
+          assert.strictEqual(decodeUUID("0188686f-2e38-7f9a-8ff4-39f506821360").version, 7);
+          assert.strictEqual(decUUID("0188686f-2e38-7f9a-8ff4-39f506821360").version, 7);
+          assert.ok(formatSQL("select 1;").includes("SELECT"));
+          assert.strictEqual(generateInsertSQL({ table: "t", rows: { a: 1 } }).query, 'INSERT INTO "t" ("a") VALUES ($1)');
+          assert.ok(generateCreateTable({ name: "t", columns: [{ name: "id", type: "INT" }] }).includes("CREATE TABLE"));
+          assert.strictEqual(buildSelectQuery({ from: "t" }).query, 'SELECT * FROM "t"');
+          assert.strictEqual(explainSQL("SELECT 1").statementType, "SELECT");
+          assert.ok(convertMySQLToPostgres("CREATE TABLE \`t\` (\`id\` int);").success);
+          assert.strictEqual(parseExplainPlan(JSON.stringify([{ Plan: { "Node Type": "Seq Scan" } }])).dialect, "postgres");
+          console.log("ESM runtime compatibility verification passed!");
+          EOF
+
+          node test-esm.mjs
+
+          cat << 'EOF' > test-cjs.cjs
+          const assert = require("node:assert");
+          const {
+            parseConnectionString,
+            decodeObjectId,
+            decodeSnowflakeId,
+            decodeUUID,
+            formatSQL,
+            explainSQL,
+            buildSelectQuery,
+            generateInsertSQL,
+            generateCreateTable,
+            convertMySQLToPostgres,
+            parseExplainPlan
+          } = require("@rahul_dadhich15/database-tools-toolkit");
+          const { parseConnectionString: parseCS } = require("@rahul_dadhich15/database-tools-toolkit/connection-string");
+          const { decodeObjectId as decodeOID } = require("@rahul_dadhich15/database-tools-toolkit/objectid");
+
+          assert.strictEqual(parseConnectionString("postgres://u:p@localhost:5432/db").protocol, "postgres:");
+          assert.strictEqual(parseCS("sqlite::memory:").database, ":memory:");
+          assert.strictEqual(decodeObjectId("507f1f77bcf86cd799439011").timestamp.seconds, 1350508407);
+          assert.strictEqual(decodeOID("507f1f77bcf86cd799439011").id, "507f1f77bcf86cd799439011");
+          assert.strictEqual(decodeSnowflakeId(1541815603606036480n).id, "1541815603606036480");
+          assert.strictEqual(decodeUUID("0188686f-2e38-7f9a-8ff4-39f506821360").version, 7);
+          assert.ok(formatSQL("select 1;").includes("SELECT"));
+          assert.strictEqual(generateInsertSQL({ table: "t", rows: { a: 1 } }).query, 'INSERT INTO "t" ("a") VALUES ($1)');
+          assert.ok(generateCreateTable({ name: "t", columns: [{ name: "id", type: "INT" }] }).includes("CREATE TABLE"));
+          assert.strictEqual(buildSelectQuery({ from: "t" }).query, 'SELECT * FROM "t"');
+          assert.strictEqual(explainSQL("SELECT 1").statementType, "SELECT");
+          assert.ok(convertMySQLToPostgres("CREATE TABLE \`t\` (\`id\` int);").success);
+          assert.strictEqual(parseExplainPlan(JSON.stringify([{ Plan: { "Node Type": "Seq Scan" } }])).dialect, "postgres");
+          console.log("CJS runtime compatibility verification passed!");
+          EOF
+
+          node test-cjs.cjs

@@ -1,0 +1,158 @@
+{
+  "name": "@rahul_dadhich15/database-tools-toolkit",
+  "version": "1.0.0",
+  "description": "Zero-runtime-dependency, browser-first database toolkit for TypeScript and JavaScript",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    ".": {
+      "types": {
+        "import": "./dist/index.d.ts",
+        "require": "./dist/index.d.cts"
+      },
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./connection-string": {
+      "types": {
+        "import": "./dist/connection-string/index.d.ts",
+        "require": "./dist/connection-string/index.d.cts"
+      },
+      "import": "./dist/connection-string/index.js",
+      "require": "./dist/connection-string/index.cjs"
+    },
+    "./explain-plan": {
+      "types": {
+        "import": "./dist/explain-plan-view/index.d.ts",
+        "require": "./dist/explain-plan-view/index.d.cts"
+      },
+      "import": "./dist/explain-plan-view/index.js",
+      "require": "./dist/explain-plan-view/index.cjs"
+    },
+    "./objectid": {
+      "types": {
+        "import": "./dist/objectid-decode/index.d.ts",
+        "require": "./dist/objectid-decode/index.d.cts"
+      },
+      "import": "./dist/objectid-decode/index.js",
+      "require": "./dist/objectid-decode/index.cjs"
+    },
+    "./mysql-to-postgres": {
+      "types": {
+        "import": "./dist/mysql-to-postgres/index.d.ts",
+        "require": "./dist/mysql-to-postgres/index.d.cts"
+      },
+      "import": "./dist/mysql-to-postgres/index.js",
+      "require": "./dist/mysql-to-postgres/index.cjs"
+    },
+    "./snowflake": {
+      "types": {
+        "import": "./dist/snowflake-id-decode/index.d.ts",
+        "require": "./dist/snowflake-id-decode/index.d.cts"
+      },
+      "import": "./dist/snowflake-id-decode/index.js",
+      "require": "./dist/snowflake-id-decode/index.cjs"
+    },
+    "./sql-create-table": {
+      "types": {
+        "import": "./dist/sql-create-table/index.d.ts",
+        "require": "./dist/sql-create-table/index.d.cts"
+      },
+      "import": "./dist/sql-create-table/index.js",
+      "require": "./dist/sql-create-table/index.cjs"
+    },
+    "./sql-format": {
+      "types": {
+        "import": "./dist/sql-format/index.d.ts",
+        "require": "./dist/sql-format/index.d.cts"
+      },
+      "import": "./dist/sql-format/index.js",
+      "require": "./dist/sql-format/index.cjs"
+    },
+    "./sql-insert": {
+      "types": {
+        "import": "./dist/sql-insert-generate/index.d.ts",
+        "require": "./dist/sql-insert-generate/index.d.cts"
+      },
+      "import": "./dist/sql-insert-generate/index.js",
+      "require": "./dist/sql-insert-generate/index.cjs"
+    },
+    "./sql-explain": {
+      "types": {
+        "import": "./dist/sql-explain/index.d.ts",
+        "require": "./dist/sql-explain/index.d.cts"
+      },
+      "import": "./dist/sql-explain/index.js",
+      "require": "./dist/sql-explain/index.cjs"
+    },
+    "./sql-select": {
+      "types": {
+        "import": "./dist/sql-select-build/index.d.ts",
+        "require": "./dist/sql-select-build/index.d.cts"
+      },
+      "import": "./dist/sql-select-build/index.js",
+      "require": "./dist/sql-select-build/index.cjs"
+    },
+    "./uuid": {
+      "types": {
+        "import": "./dist/uuid-decode/index.d.ts",
+        "require": "./dist/uuid-decode/index.d.cts"
+      },
+      "import": "./dist/uuid-decode/index.js",
+      "require": "./dist/uuid-decode/index.cjs"
+    },
+    "./sql": {
+      "types": {
+        "import": "./dist/sql.d.ts",
+        "require": "./dist/sql.d.cts"
+      },
+      "import": "./dist/sql.js",
+      "require": "./dist/sql.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:smoke": "node scripts/smoke-esm.mjs && node scripts/smoke-cjs.cjs",
+    "test:consumer": "node scripts/verify-tarball.mjs",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.8",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "database",
+    "sql",
+    "connection-string",
+    "explain-plan",
+    "objectid",
+    "snowflake",
+    "uuid",
+    "sql-formatter",
+    "sql-builder",
+    "mysql-to-postgres",
+    "browser",
+    "zero-dependency"
+  ],
+  "author": "Rahul Dadhich",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rahul_dadhich15/database-tools-toolkit.git"
+  }
+}
