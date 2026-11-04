@@ -1,6 +1,6 @@
 {
   "name": "@rahul_dadhich15/database-tools-toolkit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Zero-runtime-dependency, browser-first database toolkit for TypeScript and JavaScript",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -10,7 +10,7 @@
    "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
-  }
+  },
   "files": [
     "dist",
     "README.md",
